@@ -81,7 +81,7 @@ def write_json_file(folder_name, filename, data):
     file_path = pathlib.Path(folder_name, filename)
     file_path.parent.mkdir(parents=True, exist_ok=True)
     with file_path.open('w') as file:
-        json.dump(data, file, indent=4)
+        file.write(data)
         print(f"JSON data saved to {file_path}")
 
 #Function 1: Process text data
@@ -137,7 +137,7 @@ def process_excel_file(input_file, output_file):
 def process_json_file(input_file, output_file):
     try:
         with open(input_file, 'r') as file:
-            data = json.load(file)
+            data = dict(json.load(file))
         #Parsed Song Name of random songs data set
         with open(output_file, 'w') as file:
             for title in data:
