@@ -5,6 +5,7 @@ to different file formats."""
 
 # Standard library imports
 import csv
+import json
 import pathlib 
 from io import StringIO
 from pathlib import Path
@@ -13,6 +14,8 @@ import io
 # External import
 import requests 
 import pandas as pd
+import xlrd
+from collections import Counter
 
 # Import local modules
 import Sean_StClair_utils
@@ -61,114 +64,89 @@ def write_txt_file(folder_name, filename, data):
         print(f"Text data saved to {file_path}")
 
 def write_csv_file(folder_name, filename, data):
-    file_path = Path(folder_name).joinpath(filename)  # use pathlib to join paths
-
-    # Create the folder if it doesn't exist
+    file_path = pathlib.Path(folder_name, filename)
     file_path.parent.mkdir(parents=True, exist_ok=True)
-
-    # Parse CSV data
-    csv_data = parse_csv_data(data)
-
-    with file_path.open('w', newline='', encoding='utf-8-sig') as file:
-        csv_writer = csv.writer(file)
-        csv_writer.writerows(csv_data)
+    with file_path.open('w', newline='', encoding='utf-8') as file:
+        file.write(data)
         print(f"CSV data saved to {file_path}")
 
 def write_excel_file(folder_name, filename, data):
-    file_path = Path(folder_name).joinpath(filename)  # use pathlib to join paths
-
-    # Create the folder if it doesn't exist
+    file_path = pathlib.Path(folder_name, filename)
     file_path.parent.mkdir(parents=True, exist_ok=True)
-
     with open(file_path, 'wb') as file:
         file.write(data)
         print(f"Excel data saved to {file_path}")
 
 def write_json_file(folder_name, filename, data):
-    file_path = Path(folder_name).joinpath(filename)  # use pathlib to join paths
-
-    # Create the folder if it doesn't exist
+    file_path = pathlib.Path(folder_name, filename)
     file_path.parent.mkdir(parents=True, exist_ok=True)
-
-    with file_path.open('wb') as file:
-        file.write(data)
-        print(f"Binary data saved to {file_path}")
+    with file_path.open('w') as file:
+        json.dump(data, file, indent=4)
+        print(f"JSON data saved to {file_path}")
 
 #Function 1: Process text data
 
-def process_txt_file(folder_name, input_filename, output_filename):
-    # Fetch the data
-    txt_url = 'https://github.com/tadzik/5e-spells/blob/master/spelllist.txt'
-    response = requests.get(txt_url)
-    
-    if response.status_code == 200:
-        data = response.text
-        write_txt_file(folder_name, input_filename, data)
-        processed_data = data  
-        write_txt_file(folder_name, output_filename, processed_data)
-    else:
-        print(f"Failed to fetch data: {response.status_code}")
+def process_txt_file(input_file, output_file):
+    #get count of words in text file
+    try:
+        with open(input_file, 'r') as file:
+            text = file.read()
+        words = text.split()
+        word_count = Counter(words)
+
+        with open(output_file, 'w') as file:
+            for word, count in word_count.items():
+                file.write(f"{word}: {count}\n")
+        print(f"Word count saved to {output_file}")
+    except Exception as e:
+        print(f"Error processing text data: {e}")
+
 
 #Function 2. Process CSV Data
+def process_csv_file(input_file, output_file):
+    # Calculate the average and median amount of global sales for video games.
+    try:
+        df = pd.read_csv(input_file)
 
-def parse_csv_data(csv_text):
-    csv_data = []
-    csv_reader = csv.reader(StringIO(csv_text))
-    for row in csv_reader:
-        csv_data.append(row)
-    return csv_data
+        average_global_sales = df['Global_sales'].mean()
+        median_global_sales = df['Global_sales'].mean()
 
-def process_csv_file(csv_folder_name, input_filename, output_filename):
-    # Fetch the data
-    csv_url = 'https://github.com/ValdisW/datasets/blob/master/video-game-sales.csv'
-    response = requests.get(csv_url)
-    
-    if response.status_code == 200:
-        data = response.text
-        write_csv_file(csv_folder_name, input_filename, data)
-        processed_data = data 
-        write_csv_file(csv_folder_name, output_filename, processed_data)
-    else:
-        print(f"Failed to fetch data: {response.status_code}")
+        with open(output_file, 'w') as file:
+            file.write(f"Average Global Sales: {average_global_sales}\n")
+            file.write(f"Median Global Sales: {median_global_sales}\n")
+
+        print(f"Averages saved to {output_file}")
+    except Exception as e:
+        print(f"Error processing CSV data: {e}")
 
 #Function 3: Process Excel Data
 
-def process_excel_file(excel_folder_name, input_filename, output_filename):
-    # Fetch the data
-    excel_url = 'https://github.com/bharathirajatut/sample-excel-dataset/blob/master/fullmoon.xls'
-    response = requests.get(excel_url)
-    
-    if response.status_code == 200:
-        data = response.content
-        write_excel_file(excel_folder_name, input_filename, data)
-
-        # Use pandas to read Excel data directly from binary data
-        excel_data = pd.read_excel(io.BytesIO(data), sheet_name='Sheet1')  # Update 'Sheet1' to the actual sheet name
-
-        # Convert the read Excel data to CSV format
-        processed_data = excel_data.to_csv(index=False)
-        
-        # Write the processed data to a CSV file
-        csv_output_filename = output_filename.replace('.xls', '.csv')
-        write_csv_file(excel_folder_name, csv_output_filename, processed_data)
-        
-    else:
-        print(f"Failed to fetch data: {response.status_code}")
+def process_excel_file(input_file, output_file):
+    try:
+        df = pd.read_excel(input_file)
+        # Sort list of sample cases from highest to lowest
+        sorted_df = df.sort_values('cases', ascending=False)
+        sorted_output_file = output_file.replace('.txt', '.xlsx')
+        sorted_df.to_excel(sorted_output_file, index=False)
+        print(f"Data sorted by cases and saved to {sorted_output_file}")
+    except Exception as e:
+        print(f"Error processing Excel data: {e}")
 
 #Function 4: Process Json Data
 
-def process_json_file(json_folder_name, input_filename, output_filename):
-    # Fetch the data
-    json_url = 'https://github.com/LearnWebCode/json-example/blob/master/animals-1.json'
-    response = requests.get(json_url)
-    
-    if response.status_code == 200:
-        data = response.content
-        write_json_file(json_folder_name, input_filename, data)
-        write_json_file(json_folder_name, output_filename, data)
-       
-    else:
-        print(f"Failed to fetch data: {response.status_code}")
+def process_json_file(input_file, output_file):
+    try:
+        with open(input_file, 'r') as file:
+            data = json.load(file)
+        #Parsed Song Name of random songs data set
+        with open(output_file, 'w') as file:
+            for title in data:
+                songName = title.get('songName', [])
+                file.write(f"{title['title']}: {', '.join(songName)}\n")
+        
+        print(f"Song name extracted and saved to {output_file}")
+    except Exception as e:
+        print(f"Error processing JSON data: {e}")
 
 # Exception reporting
 def fetch_txt_data(folder_name, url):
@@ -206,7 +184,7 @@ def main():
 
     excel_url = 'https://github.com/bharathirajatut/sample-excel-dataset/blob/master/fullmoon.xls' 
     
-    json_url = 'https://github.com/LearnWebCode/json-example/blob/master/animals-1.json'
+    json_url = 'https://gist.github.com/Jetrom17/380adb1d9d7b6f23a948759b48fce64e#file-music-info-json'
 
     txt_folder_name = 'data-txt'
     csv_folder_name = 'data-csv'
