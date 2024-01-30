@@ -98,7 +98,7 @@ def write_json_file(folder_name, filename, data):
 
 def process_txt_file(folder_name, input_filename, output_filename):
     # Fetch the data
-    txt_url = 'https://shakespeare.mit.edu/twelfth_night/full.html'
+    txt_url = 'https://github.com/tadzik/5e-spells/blob/master/spelllist.txt'
     response = requests.get(txt_url)
     
     if response.status_code == 200:
@@ -200,7 +200,7 @@ def main():
    
     print(f"Name: {'datafun-03-analytics-SeanStClair'}")
 
-    txt_url = 'https://shakespeare.mit.edu/twelfth_night/full.html'
+    txt_url = 'https://github.com/tadzik/5e-spells/blob/master/spelllist.txt'
 
     csv_url = 'https://github.com/ValdisW/datasets/blob/master/video-game-sales.csv' 
 
